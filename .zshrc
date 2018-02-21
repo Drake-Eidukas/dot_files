@@ -76,7 +76,8 @@ plugins=(
 )
 
 POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(os_icon dir vcs)
-POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status root_indicator background_jobs history battery time)
+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status root_indicator history battery time)
+POWERLEVEL9K_TIME_FORMAT="%D{%r}"
 
 source $ZSH/oh-my-zsh.sh
 
@@ -137,6 +138,8 @@ function save-start {
     (ruby ~/workspace/vm-backup/backup.rb &)
     cd ~/xgdev && vagrant up && vagrant ssh
 }
+
+alias zshrc="code ~/.zshrc"
 
 alias quit="cd ~/xgdev && vagrant suspend && vagrant halt"
 alias start="cd ~/xgdev && vagrant up && vagrant ssh"
