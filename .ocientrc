@@ -1,4 +1,4 @@
-alias resource="source ~/.bashrc"
+source ~/dot_files/i_all.sh
 
 alias eclipse=". ~/launch-eclipse.sh"
 
@@ -18,26 +18,61 @@ violet="108;113;196"
 blue="38;239;210"
 cyan="42;161;152"
 green="133;153;0"
-endColor="\e[0m"
 fg="38;2;"
 bg="48;2;"
-fgColor="\e[${fg}"
-bgColor="\e[${bg}"
+fgColor="\033[${fg}"
+bgColor="\033[${bg}"
+endColor="\033[0m"
 
 right=$i_ple_right_half_circle_thick
 left=$i_ple_left_half_circle_thick
+git_logo=$i_dev_github_badge
 
-appleLogo="\[$fgColor$base1;$bg${base03}m\] $i_fa_apple \[$endColor\]"
-linuxLogo="\[$fgColor$base1;$bg${base03}m\] $i_fa_linux \[$endColor\]"
-sepOne="\[$fgColor$base03;$bg${base02}m\]$right\[$endColor\]"
-directory="\[$fgColor$cyan;$bg${base02}m\]\w\[$endColor\]"
-sepTwo="\[$fgColor$base02;$bg${base03}m\]$right\[$endColor\]"
+parse_git_branch() {
+	#git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/' | sed 's/[()]//g'
+	__git_ps1 | sed 's/[()]//g'
+}
 
-sepOne_right="\[$fgColor$base2;$bg${base03}m\]$left\[$endColor\]"
-sepThree="\[$fgColor$base2;$bg${base03}m\]$right\[$endColor\]"
-timeStamp="\[$fgColor$base0;$bg${base2}m\]\@\[$endColor\]"
+git_branch() {
+	echo -e "$fgColor$cyan;$bg${base02}m$(parse_git_branch)$endColor"
+}
 
-leftprompt="${linuxLogo}${sepOne}${directory}${sepTwo}"
-rightprompt="$timeStamp$sepThree"
-export PS1="$leftprompt"
-export PS2="${appleLogo}${sepOne}"
+print_right() {
+	echo -e "${sepTwo_right}$(git_branch)${sepOne_right}${gitLogo}"
+}
+
+print_left() {
+	echo -e "${linuxLogo}${sepOne}${directory}${sepTwo}"
+}
+
+stripped_right() {
+	sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" <<<"$(print_right)"
+}
+
+stripped_left() {
+	sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" <<<"$(print_left)"
+}
+
+appleLogo="$fgColor$base1;$bg${base03}m $i_fa_apple $endColor"
+linuxLogo="$fgColor$base1;$bg${base03}m $i_fa_linux $endColor"
+gitLogo="$fgColor$base1;$bg${base03}m$git_logo$endColor"
+
+sepOne="$fgColor$base03;$bg${base02}m$right$endColor"
+directory="$fgColor$cyan;$bg${base02}m\w$endColor"
+sepTwo="$fgColor$base02;$bg${base03}m$right$endColor"
+
+sepOne_right="$fgColor$base03;$bg${base02}m$left$endColor"
+sepTwo_right="$fgColor$base02;$bg${base03}m$left$endColor"
+
+sepThree="$fgColor$base2;$bg${base03}m$right$endColor"
+timeStamp="$fgColor$base0;$bg${base2}m\@$endColor"
+
+Save='\033[s'
+Rest='\033[u'
+
+export PS2="${linuxLogo}${sepOne}"
+#export PS1="\[${Save}\e[${COLUMNS}C\e[${#stripped_right}D$(print_right)${Rest}\]$(print_left)"
+compensation=0
+export PS1="\[${Save}\033[${COLUMNS}C\033[\$(( \$(stripped_right | wc -m) - ${compensation}))D\$(print_right)${Rest}\]$(print_left)"
+
+xgsrc
