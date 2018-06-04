@@ -21,14 +21,14 @@ green="133;153;0"
 fg="38;2;"
 bg="48;2;"
 
+color_open='\001'
+color_close='\002'
+
 fgColor="\033[${fg}"
 bgColor="\033[${bg}"
-endColor="\001\033[0m\002"
-Save="\033[s"
-Rest="\033[u"
-
-color_open="\["
-color_close="\]"
+endColor="${color_open}\033[0m${color_close}"
+Save='\033[s'
+Rest='\033[u'
 
 logo_color="${color_open}${fgColor}${base1};${bg}${base03}m${color_close}"
 directory_color="${color_open}${fgColor}${cyan};${bg}${base02}m${color_close}"
@@ -137,7 +137,7 @@ left_length() {
 }
 	
 
-export PS1="${linuxLogo}${sepOne}${directory}${sepTwo}$(print_git_left)"
+export PS1="${linuxLogo}${sepOne}${directory}${sepTwo}\$(print_git_left)"
 export PS2="${linuxLogo}${sepOne}"
 
 xgsrc
