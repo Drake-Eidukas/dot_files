@@ -3,24 +3,34 @@ source ~/.fonts/i_all.sh
 # alias quit="cd ~/xgdev && vagrant suspend && vagrant halt"
 # alias start="cd ~/xgdev && vagrant up && vagrant ssh"
 
+VM_NAME="xgdev"
 function startvm() {
-    status=$(vboxmanage showvminfo "xgdev" | grep -c "running (since")
-    if [ $status = 1 ]; then
-        echo "VM already started... attempting to ssh in..."
+    xgdev_info=$(vboxmanage showvminfo $VM_NAME)
+    if [ $(echo xgdev_info | grep -c "running (since") -gt 0 ]; then
+	echo "VM already started... attempting to ssh in..."
+	while ! ssh -Y user@172.16.10.2
+	do
+        	echo "Can't ssh into vm yet... waiting for 1 second."
+        	sleep 1
+    	done
+    elif [ $(echo xgdev_info | grep -c "restoring (since") -gt 0 ]; then
+	echo "VM starting up... waiting 3 seconds and trying again."
+	sleep 3
+	startvm
+    elif [ $(echo xgdev_info | grep -c "saving (since") -gt 0 ]; then
+	echo "VM currently saving... waiting 5 seconds and trying again."
+	sleep 5
+	startvm
     else
-        echo "VM not started yet... starting vm."
-        vboxmanage startvm xgdev --type headless
-        echo "Attempting to ssh into vm..."
+	echo "VM not started yet... starting vm."
+	vboxmanage startvm $VM_NAME --type headless
+	sleep 5
+	startvm
     fi
-
-    while ! ssh user@172.16.10.2
-    do 
-        echo "..."
-    done
 }
 
 function quitvm() {
-    vboxmanage controlvm xgdev savestate
+    vboxmanage controlvm $VM_NAME savestate
 }
 
 function code {
@@ -85,3 +95,25 @@ export PS1="$leftprompt"
 export PS2="${appleLogo}${sepOne}"
 # export PS1="$leftprompt$rightprompt"
 # export PS1="${appleLogo}${sepOne}${directory}${sepTwo}\[$(rightprompt;)\]"
+
+function fix_window () {
+	local wmctrl_output=$(/usr/local/bin/wmctrl -l)
+	IFS=$'\n' array=($wmctrl_output); unset IFS
+
+	for line in "${array[@]}"
+	do
+		local hex=${line%% *}
+		echo "Fixing window with id: $hex"
+		if [ "$5" = "true" ]; then
+			eval "/usr/local/bin/wmctrl -ir $hex -e add,fullscreen"
+		else
+			eval "/usr/local/bin/wmctrl -ir $hex -e 0,$1,$2,$3,$4"
+		fi
+	done
+}
+
+function fix {
+	fix_window 3843 0 3840 2114
+}
+
+
