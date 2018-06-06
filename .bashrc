@@ -131,4 +131,14 @@ alias xgsrc='cd $XGSRC_PATH'
 export NVM_DIR="/home/user/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
 
+function resource() {
+	if [ "$#" -ne 1 ]; then
+		resource $BASH_SOURCE
+	else
+		source $1
+		printf 'Refreshed bash configuration from %s\n' $1
+	fi
+}
+export -f resource
+
 source ~/.ocientrc

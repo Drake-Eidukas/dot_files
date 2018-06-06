@@ -1,16 +1,16 @@
-alias resource="source ~/.bashrc"
+source ~/dot_files/i_all.sh
 
 alias eclipse=". ~/launch-eclipse.sh"
 
-base03="0;43;54"
-base02="7;54;66"
-base01="88;110;117"
-base00="101;123;131"
-base0="131;148;150"
-base1="147;161;161"
-base2="238;232;213"
-base3="#253;246;227"
-yellow="181;137;0"
+base03="0;43;54" 	# darkest blueish
+base02="7;54;66" 	# lighter blueish
+base01="88;110;117" 	# dark grey
+base00="101;123;131" 	# lighter grey
+base0="131;148;150" 	# lighter still
+base1="147;161;161" 	# light grey at this point
+base2="238;232;213"	# light yellow... sandy
+base3="#253;246;227"	# lighter yellow
+yellow="181;137;0"	
 orange="#203;75;22"
 red="#220;50;47"
 magenta="211;54;130"
@@ -18,26 +18,126 @@ violet="108;113;196"
 blue="38;239;210"
 cyan="42;161;152"
 green="133;153;0"
-endColor="\e[0m"
 fg="38;2;"
 bg="48;2;"
-fgColor="\e[${fg}"
-bgColor="\e[${bg}"
 
-right=$i_ple_right_half_circle_thick
-left=$i_ple_left_half_circle_thick
+color_open='\001'
+color_close='\002'
 
-appleLogo="\[$fgColor$base1;$bg${base03}m\] $i_fa_apple \[$endColor\]"
-linuxLogo="\[$fgColor$base1;$bg${base03}m\] $i_fa_linux \[$endColor\]"
-sepOne="\[$fgColor$base03;$bg${base02}m\]$right\[$endColor\]"
-directory="\[$fgColor$cyan;$bg${base02}m\]\w\[$endColor\]"
-sepTwo="\[$fgColor$base02;$bg${base03}m\]$right\[$endColor\]"
+fgColor="\033[${fg}"
+bgColor="\033[${bg}"
+endColor="${color_open}\033[0m${color_close}"
+Save='\033[s'
+Rest='\033[u'
 
-sepOne_right="\[$fgColor$base2;$bg${base03}m\]$left\[$endColor\]"
-sepThree="\[$fgColor$base2;$bg${base03}m\]$right\[$endColor\]"
-timeStamp="\[$fgColor$base0;$bg${base2}m\]\@\[$endColor\]"
+logo_color="${color_open}${fgColor}${base1};${bg}${base03}m${color_close}"
+directory_color="${color_open}${fgColor}${cyan};${bg}${base02}m${color_close}"
+timeStamp_color="${color_open}${fgColor}${base0};${bg}${base2}m${color_close}"
+sepOne_color="${color_open}${fgColor}${base03};${bg}${base02}m${color_close}"
+sepTwo_color="${color_open}${fgColor}${base02};${bg}${base03}m${color_close}"
+sepThree_color="${color_open}${fgColor}${base2};${bg}${base03}m${color_close}"
 
-leftprompt="${linuxLogo}${sepOne}${directory}${sepTwo}"
-rightprompt="$timeStamp$sepThree"
-export PS1="$leftprompt"
-export PS2="${appleLogo}${sepOne}"
+right=$i_ple_right_half_circle_thick 	# replace with delimiter between segments on left half of prompt
+left=$i_ple_left_half_circle_thick	# replace with delimiter between segments on right half of prompt.
+
+git_logo=$i_dev_github_badge
+linux_logo=$i_fa_linux
+apple_logo=$i_fa_apple
+
+appleLogo="${logo_color} ${apple_logo} ${endColor}"
+linuxLogo="${logo_color} ${linux_logo} ${endColor}"
+gitLogo="${logo_color} ${git_logo} ${endColor}"
+
+sepOne="${sepOne_color}${right}${endColor}"
+sepTwo="${sepTwo_color}${right}${endColor}"
+sepThree="${sepThree_color}${right}${endColor}"
+
+sepOne_right="${sepOne_color}${left}${endColor}"
+sepTwo_right="${sepTwo_color}${left}${endColor}"
+sepThree_right="${sepThree_color}${left}${endColor}"
+
+directory="${directory_color}\w${endColor}"
+timeStamp="${timeStamp_color}\@${endColor}"
+
+parse_git_branch() {
+	__git_ps1 | sed 's/[()]//g'
+}
+
+git_branch() {
+	local branch=$(parse_git_branch)
+	if [ ${#branch} != 0 ]; then
+		printf "%s" "${directory_color}$(parse_git_branch)${endColor}"
+	fi
+}
+
+print_right() {
+	local branch=$(git_branch)
+	local length=$(echo -n $branch | stripped_length)
+	if [ $length != 0 ]; then
+		printf "%s" "${sepTwo_right}${branch}${sepOne_right}${gitLogo}"
+	fi
+}
+
+print_git_left() {
+	local branch=$(git_branch)
+	local length=$(echo -n $branch | stripped_length)
+	if [ $length != 0 ]; then
+		echo -ne "${gitLogo}${sepOne}$(git_branch)${sepTwo}"
+	fi
+}
+
+print_left() {
+	printf "%s" "${linuxLogo}${sepOne}${directory}${sepTwo}"
+}
+
+print_prompt() {
+	local left_prompt=$(print_left)
+	local right_prompt=$(print_right)
+
+	#local left_length=$(echo $left_prompt | stripped_length)
+	#local right_length=$(echo $right_prompt | stripped_length)
+	
+	local right_length=$(( $(parse_git_branch | wc -m)  ))
+	
+	local prompt=""
+	if [ $right_length > 0 ]; then
+		right_length=$(( $right_length + ${#right} + ${#right} + ${#git_logo} ))
+		prompt="${prompt}\001\033[$(( ${COLUMNS} - ${right_length} - 1 ))C\002${right_prompt}\001\033[${COLUMNS}D\002"
+	fi
+	
+	printf "%s" "${prompt}${left_prompt}"
+}
+
+print_prompt_boring() {
+	echo -ne "${linuxLogo}${sepOne}${directory}${sepTwo}$(print_git_left)"
+}
+
+forward_columns() {
+	printf "%s" "\001\033[${COLUMNS}C\002"
+}
+
+backward_right() {
+	printf "%s" "\001\033[$(right_length)D\002"
+}
+
+strip() {
+	sed -r 's/(\\001.*\\002)\s*(.*)(\\001.*\\002)/\2/'
+}
+
+stripped_length() {
+	strip | wc -m
+}
+
+right_length() {
+	print_right | stripped_length
+}
+
+left_length() {
+	print_left | stripped_length
+}
+	
+
+export PS1="${linuxLogo}${sepOne}${directory}${sepTwo}\$(print_git_left)"
+export PS2="${linuxLogo}${sepOne}"
+
+xgsrc
